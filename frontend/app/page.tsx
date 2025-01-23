@@ -77,38 +77,27 @@ export default function LotteryApp() {
     try {
       const tx = await state.contract!.createRoom();
       await tx.wait();
-      alert("Room created successfully!");
+      // Fetch room details
+      const playersList = await state.contract!.getPlayers(roomId);
+      const balance = await state.contract!.getTotalBalance(roomId);
+      const currentWinner = await state.contract!.getWinner(roomId);
+      const previousWinnersList = await state.contract!.getPreviousWinners(roomId);
+      alert("Room created/joined successfully!");
       setRoomCreated(true); // Set roomCreated to true after creating a room
+
+
+           // Update state with room details
+           setPlayers(playersList);
+           setTotalBalance(ethers.formatEther(balance));
+           setWinner(currentWinner);
+           setPreviousWinners(previousWinnersList);
+           setRoomActive(true); // Set room as active
     } catch (error) {
       console.error("Error creating room:", error);
     }
   };
 
 
-  const handleJoinRoom = async () => {
-    if (roomId === null) return alert("Please enter a room ID");
-    try {
-      const isActive = await state.contract!.isRoomActive(roomId);
-      if (!isActive) {
-        return alert("No room found with that ID. Please create a room or enter a valid room ID.");
-      }
-
-      // Fetch room details
-      const playersList = await state.contract!.getPlayers(roomId);
-      const balance = await state.contract!.getTotalBalance(roomId);
-      const currentWinner = await state.contract!.getWinner(roomId);
-      const previousWinnersList = await state.contract!.getPreviousWinners(roomId);
-
-      // Update state with room details
-      setPlayers(playersList);
-      setTotalBalance(ethers.formatEther(balance));
-      setWinner(currentWinner);
-      setPreviousWinners(previousWinnersList);
-      setRoomActive(true); // Set room as active
-    } catch (error) {
-      console.error("Error joining room:", error);
-    }
-  };
 
   const handleStartLottery = async () => {
     if (roomId === null) return alert("Please enter a room ID");
@@ -151,7 +140,7 @@ export default function LotteryApp() {
       const tx = await state.contract!.endLottery(roomId);
       await tx.wait();
       alert("Lottery has ended!");
-
+  
       // Fetch new players list, winner, and previous winners
       const playersList = await state.contract!.getPlayers(roomId);
       const currentWinner = await state.contract!.getWinner(roomId);
@@ -183,23 +172,27 @@ export default function LotteryApp() {
               onClick={handleCreateRoom}
               className="bg-blue-500 text-white px-4 py-2 rounded w-full mb-2"
             >
-              Create Room
+              Create/join Room
             </button>
             <input
               type="number"
               className="w-full p-2 border rounded text-black mb-2"
-              placeholder="Enter Room ID to Join"
+              placeholder="Enter Room ID to Join/create"
               value={roomId || ""}
               onChange={(e) => setRoomId(Number(e.target.value))}
             />
-            <button
-              onClick={handleJoinRoom}
-              className="bg-green-500 text-white px-4 py-2 rounded w-full"
-            >
-              Join Room
-            </button>
           </div>
         )}
+
+
+      {/* Display Room ID after joining */}
+
+      {roomActive && roomId !== null && (
+        <div className="mb-4">
+        <p className="text-black">You are currently in Room ID: {roomId}</p>
+        </div>
+      )}
+
 
         {/* Lottery Functionality Section */}
         {roomCreated && (
